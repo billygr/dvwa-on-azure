@@ -38,3 +38,4 @@ terraform.rc
 
 # Ingore keys
 terraform-key.pem
+azureuser.pem

@@ -14,3 +14,4 @@ Login to your azure infrastructure with az login
 `terraform plan`
 `terraform apply`
 
+ssh to your instance with ssh -i azureuser.pem azureuser@XXX you can find the IP from the running instance created

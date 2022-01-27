@@ -58,6 +58,18 @@ resource "azurerm_network_security_group" "myterraformnsg" {
         destination_address_prefix = "*"
     }
 
+    security_rule {
+        name                       = "HTTP"
+        priority                   = 1002
+        direction                  = "Inbound"
+        access                     = "Allow"
+        protocol                   = "Tcp"
+        source_port_range          = "*"
+        destination_port_range     = "80"
+        source_address_prefix      = "*"
+        destination_address_prefix = "*"
+    }
+
     tags = {
         environment = "dvwa-on-azure"
     }
@@ -122,7 +134,7 @@ output "tls_private_key" {
 
 # Create virtual machine
 resource "azurerm_linux_virtual_machine" "myterraformvm" {
-    name                  = "myVM"
+    name                  = "dvwa-server"
     location              = "westeurope"
     resource_group_name   = azurerm_resource_group.myterraformgroup.name
     network_interface_ids = [azurerm_network_interface.myterraformnic.id]
@@ -154,7 +166,16 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
         storage_account_uri = azurerm_storage_account.mystorageaccount.primary_blob_endpoint
     }
 
+# Run the install-dvwa.sh script on VM creation
+    custom_data = filebase64("${path.module}/install_dvwa.sh")
+
     tags = {
         environment = "dvwa-on-azure"
     }
+}
+
+resource "local_file" "private_key" {
+  content         = tls_private_key.example_ssh.private_key_pem
+  filename        = "azureuser.pem"
+  file_permission = "0600"
 }

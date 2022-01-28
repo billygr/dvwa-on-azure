@@ -1,6 +1,6 @@
 # Create a resource group if it doesn't exist
 resource "azurerm_resource_group" "myterraformgroup" {
-    name     = "rg-dvwa-on-azure"
+    name     = var.resource_group_name
     location = var.location
 
     tags = {
@@ -10,7 +10,7 @@ resource "azurerm_resource_group" "myterraformgroup" {
 
 # Create virtual network
 resource "azurerm_virtual_network" "myterraformnetwork" {
-    name                = "myVnet"
+    name                = "vnet-dvwa"
     address_space       = ["10.0.0.0/16"]
     location            = var.location
     resource_group_name = azurerm_resource_group.myterraformgroup.name
@@ -22,7 +22,7 @@ resource "azurerm_virtual_network" "myterraformnetwork" {
 
 # Create subnet
 resource "azurerm_subnet" "myterraformsubnet" {
-    name                 = "mySubnet"
+    name                 = "snet-dvwa"
     resource_group_name  = azurerm_resource_group.myterraformgroup.name
     virtual_network_name = azurerm_virtual_network.myterraformnetwork.name
     address_prefixes       = ["10.0.1.0/24"]
@@ -30,7 +30,7 @@ resource "azurerm_subnet" "myterraformsubnet" {
 
 # Create public IPs
 resource "azurerm_public_ip" "myterraformpublicip" {
-    name                         = "myPublicIP"
+    name                         = "pip-dvwa"
     location                     = var.location
     resource_group_name          = azurerm_resource_group.myterraformgroup.name
     allocation_method            = "Dynamic"
@@ -42,7 +42,7 @@ resource "azurerm_public_ip" "myterraformpublicip" {
 
 # Create Network Security Group and rule
 resource "azurerm_network_security_group" "myterraformnsg" {
-    name                = "myNetworkSecurityGroup"
+    name                = "nsg-dvwa"
     location            = var.location
     resource_group_name = azurerm_resource_group.myterraformgroup.name
 
@@ -77,7 +77,7 @@ resource "azurerm_network_security_group" "myterraformnsg" {
 
 # Create network interface
 resource "azurerm_network_interface" "myterraformnic" {
-    name                      = "myNIC"
+    name                      = "nic-dvwa"
     location                  = var.location
     resource_group_name       = azurerm_resource_group.myterraformgroup.name
 
@@ -94,7 +94,7 @@ resource "azurerm_network_interface" "myterraformnic" {
 }
 
 # Connect the security group to the network interface
-resource "azurerm_network_interface_security_group_association" "example" {
+resource "azurerm_network_interface_security_group_association" "dvwa" {
     network_interface_id      = azurerm_network_interface.myterraformnic.id
     network_security_group_id = azurerm_network_security_group.myterraformnsg.id
 }
@@ -123,12 +123,12 @@ resource "azurerm_storage_account" "mystorageaccount" {
 }
 
 # Create (and display) an SSH key
-resource "tls_private_key" "example_ssh" {
+resource "tls_private_key" "dvwa_ssh" {
   algorithm = "RSA"
   rsa_bits = 4096
 }
 output "tls_private_key" { 
-    value = tls_private_key.example_ssh.private_key_pem 
+    value = tls_private_key.dvwa_ssh.private_key_pem
     sensitive = true
 }
 
@@ -141,7 +141,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
     size                  = "Standard_DS1_v2"
 
     os_disk {
-        name              = "myOsDisk"
+        name              = "dvwa-disk"
         caching           = "ReadWrite"
         storage_account_type = "Premium_LRS"
     }
@@ -153,13 +153,13 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
         version   = "latest"
     }
 
-    computer_name  = "myvm"
+    computer_name  = "dvwa"
     admin_username = "azureuser"
     disable_password_authentication = true
 
     admin_ssh_key {
         username       = "azureuser"
-        public_key     = tls_private_key.example_ssh.public_key_openssh
+        public_key     = tls_private_key.dvwa_ssh.public_key_openssh
     }
 
     boot_diagnostics {
@@ -175,7 +175,7 @@ resource "azurerm_linux_virtual_machine" "myterraformvm" {
 }
 
 resource "local_file" "private_key" {
-  content         = tls_private_key.example_ssh.private_key_pem
+  content         = tls_private_key.dvwa_ssh.private_key_pem
   filename        = "azureuser.pem"
   file_permission = "0600"
 }

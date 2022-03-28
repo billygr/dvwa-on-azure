@@ -179,3 +179,13 @@ resource "local_file" "private_key" {
   filename        = "azureuser.pem"
   file_permission = "0600"
 }
+
+data "azurerm_public_ip" "myterraformpublicip" {
+  name                = azurerm_public_ip.myterraformpublicip.name
+  resource_group_name = azurerm_resource_group.myterraformgroup.name
+  depends_on          = [azurerm_linux_virtual_machine.myterraformvm]
+}
+
+output "public_ip_address" {
+  value = data.azurerm_public_ip.myterraformpublicip.ip_address
+}
